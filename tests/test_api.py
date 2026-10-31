@@ -34,7 +34,7 @@ def env(tmp_path: Path):
     settings.state_file = tmp_path / "state.json"
     settings.gap_ms = 0
     tx = MockTransmitter()
-    client = TestClient(create_app(settings, tx))
+    client = TestClient(create_app(settings, tx), headers={"X-SmartRoom": "1"})
     return client, tx, settings
 
 
@@ -120,3 +120,35 @@ def test_static_is_revalidated(env):
     client, _, _ = env
     for path in ("/", "/static/main.js", "/static/style.css"):
         assert client.get(path).headers["cache-control"] == "no-cache"
+
+
+def test_post_without_csrf_header_is_rejected(env):
+    client, tx, _ = env
+    r = client.post("/api/devices/light/full", headers={"X-SmartRoom": ""})
+    assert r.status_code == 403
+    assert tx.sent == []
+
+
+@pytest.mark.parametrize("host,ok", [
+    ("192.168.1.20:3000", True),
+    ("100.64.0.1:3000", True),
+    ("[fd7a::1]:3000", True),
+    ("localhost:3000", True),
+    ("raspberrypi:3000", True),
+    ("raspberrypi.local:3000", True),
+    ("evil.example.com:3000", False),
+    ("192.168.1.20.nip.io", False),
+])
+def test_host_header_guard(env, host, ok):
+    client, _, _ = env
+    r = client.get("/api/state", headers={"Host": host})
+    assert (r.status_code == 200) is ok
+
+
+def test_allowed_hosts_env(tmp_path, monkeypatch):
+    monkeypatch.setenv("SMARTROOM_ALLOWED_HOSTS", "pi.example.ts.net")
+    settings = load_settings(ROOT / "config.yaml", tmp_path / "none.json")
+    settings.state_file = tmp_path / "state.json"
+    client = TestClient(create_app(settings, MockTransmitter()))
+    assert client.get("/api/state", headers={"Host": "pi.example.ts.net"}).status_code == 200
+    assert client.get("/api/state", headers={"Host": "other.ts.net"}).status_code == 403

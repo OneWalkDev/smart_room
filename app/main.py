@@ -3,6 +3,7 @@
 起動: uvicorn --factory app.main:create_app --host 0.0.0.0 --port 3000
 実機なしで試す: SMARTROOM_BACKEND=mock uvicorn --factory app.main:create_app --port 3000 --reload
 """
+import ipaddress
 import json
 import logging
 import os
@@ -11,8 +12,8 @@ import time
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .config import ROOT, Command, Settings, load_settings
@@ -58,6 +59,36 @@ def create_app(settings: Optional[Settings] = None, tx: Optional[Transmitter] = 
     state = StateStore(settings.state_file)
 
     app = FastAPI(title="SmartRoom")
+    allowed_hosts = {
+        h.strip().lower()
+        for h in os.environ.get("SMARTROOM_ALLOWED_HOSTS", "").split(",")
+        if h.strip()
+    }
+
+    def host_allowed(host_header: str) -> bool:
+        """DNS リバインディング対策。IP 直打ち・localhost・ドット無しのホスト名・*.local・明示許可のみ通す。"""
+        host = host_header.strip().lower()
+        if host.startswith("["):  # [IPv6]:port
+            host = host[1:].split("]", 1)[0]
+        elif host.count(":") == 1:
+            host = host.rsplit(":", 1)[0]
+        if not host:
+            return False
+        try:
+            ipaddress.ip_address(host)
+            return True
+        except ValueError:
+            pass
+        return host == "localhost" or "." not in host or host.endswith(".local") or host in allowed_hosts
+
+    @app.middleware("http")
+    async def guard(request: Request, call_next):
+        if not host_allowed(request.headers.get("host", "")):
+            return JSONResponse({"detail": "host not allowed"}, status_code=403)
+        # CSRF 対策: 独自ヘッダを必須にすると、他サイトからの POST はブラウザのプリフライトで止まる
+        if request.method not in ("GET", "HEAD", "OPTIONS") and request.headers.get("x-smartroom") != "1":
+            return JSONResponse({"detail": "missing X-SmartRoom header"}, status_code=403)
+        return await call_next(request)
 
     @app.middleware("http")
     async def no_stale_cache(request, call_next):
