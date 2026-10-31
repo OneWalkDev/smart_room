@@ -1,0 +1,17 @@
+[Unit]
+Description=SmartRoom IR remote (FastAPI)
+After=network-online.target pigpiod.service
+Wants=network-online.target
+Requires=pigpiod.service
+
+[Service]
+Type=simple
+User=@USER@
+WorkingDirectory=@APP_DIR@
+# LAN と Tailscale の両方から受け付ける。認証なしなのでルーターでポート開放はしないこと
+ExecStart=@APP_DIR@/.venv/bin/uvicorn --factory app.main:create_app --host @HOST@ --port @PORT@
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
