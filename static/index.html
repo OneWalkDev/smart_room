@@ -3,12 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#1e2128" media="(prefers-color-scheme: dark)">
-  <meta name="theme-color" content="#e4e7ec" media="(prefers-color-scheme: light)">
-  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#1e2128">
+  <meta name="color-scheme" content="dark">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="お部屋">
   <title>お部屋のリモコン</title>
   <link rel="manifest" href="/static/manifest.webmanifest">
@@ -17,10 +16,7 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <header class="top">
-    <h1 class="title">お部屋</h1>
-    <p class="hint">表示は最後に送った操作です。リモコン本体での操作は反映されません。</p>
-  </header>
+  <h1 class="sr-only">お部屋のリモコン</h1>
 
   <main class="faces" id="devices" aria-label="機器"></main>
 
