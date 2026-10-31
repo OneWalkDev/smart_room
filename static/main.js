@@ -41,14 +41,6 @@
     if (s < 86400) return `${Math.floor(s / 3600)}時間前`;
     return `${Math.floor(s / 86400)}日前`;
   }
-  function setConn(ok) {
-    $("#conn").className = "conn " + (ok ? "ok" : "err");
-    $("#conn-label").textContent = ok ? "オンライン" : "オフライン";
-  }
-  function greet() {
-    const h = new Date().getHours();
-    $("#greet").textContent = h < 5 ? "こんばんは" : h < 11 ? "おはようございます" : h < 18 ? "こんにちは" : "こんばんは";
-  }
 
   async function api(path, opts) {
     const r = await fetch(path, opts);
@@ -73,13 +65,11 @@
       const res = await api(path, { method: "POST" });
       state = res.state || state;
       renderState();
-      setConn(true);
       btn.classList.remove("flash-ok"); void btn.offsetWidth; btn.classList.add("flash-ok");
       navigator.vibrate && navigator.vibrate(12);
       toast(okMsg);
     } catch (e) {
       btn.classList.remove("flash-err"); void btn.offsetWidth; btn.classList.add("flash-err");
-      if (e instanceof TypeError) setConn(false);
       toast(`送信失敗: ${e.message}`, true);
     } finally {
       btn.classList.remove("busy");
@@ -127,18 +117,14 @@
   }
 
   async function refreshState() {
-    try { state = await api("/api/state"); setConn(true); }
-    catch { setConn(false); }
+    try { state = await api("/api/state"); } catch { /* 次回の更新で再取得 */ }
     renderState();
   }
 
   async function init() {
-    greet();
     try {
       render(await api("/api/config"));
-      setConn(true);
     } catch (e) {
-      setConn(false);
       toast("サーバに接続できません", true);
       return;
     }
