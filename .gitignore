@@ -4,3 +4,8 @@ __pycache__/
 .pytest_cache/
 state.json
 state.tmp
+
+# 環境ごとのファイル
+codes.json
+irrp.py
+irrp_py.zip

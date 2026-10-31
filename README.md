@@ -1,10 +1,10 @@
 # SmartRoom
 
 Raspberry Pi + 赤外線LED で、部屋の照明とエアコンをスマホから操作するリモコンです。
-FastAPI で動き、家の中からは `http://192.168.1.11:3000/`、外からは Tailscale 経由でアクセスします。
+FastAPI で動き、家の中からは `http://<ラズパイのIP>:3000/`、外からは Tailscale 経由でアクセスします。
 
 ```
-スマホ（家のWi-Fi）  ──> http://192.168.1.11:3000 ─┐
+スマホ（家のWi-Fi）  ──> http://<ラズパイのIP>:3000 ┐
 スマホ（外出先）     ──> Tailscale ────────────────┴─> uvicorn 0.0.0.0:3000
                                                         └─ pigpiod ──> GPIO22 赤外線LED
 ```
@@ -23,24 +23,24 @@ FastAPI で動き、家の中からは `http://192.168.1.11:3000/`、外から�
 sudo apt install -y pigpio python3-venv   # Bookworm は python3.11-venv
 sudo systemctl enable --now pigpiod
 
-git clone https://github.com/OneWalkDev/smart_room.git ~/workspace/smart_room
-cd ~/workspace/smart_room
+git clone https://github.com/OneWalkDev/smart_room.git
+cd smart_room
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 
-# 学習済みコードを置く（旧 WebIOPi 版から移行する場合）
-cp ~/webiopi/html/script/codes ./codes.json
+# 赤外線コードを学習して codes.json を作る（下の「赤外線コードの学習」参照）
 
-sudo cp deploy/smartroom.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now smartroom
+# systemd に登録して起動（ユーザー名・配置先は自動で入る）
+./deploy/install.sh               # ポートを変えるなら PORT=8080 ./deploy/install.sh
 ```
 
-- 家の中: `http://192.168.1.11:3000/`
+`deploy/install.sh --dry-run` で登録される unit の中身だけ確認できます。
+
+- 家の中: `http://<ラズパイのIP>:3000/`（`hostname -I` で確認）
 - 外出先: Tailscale をオンにして `http://<ラズパイのTailscale IP>:3000/`（`tailscale ip -4` で確認）
 
 スマホで開いて「ホーム画面に追加」するとアプリのように使えます。
-ラズパイの IP が変わらないよう、ルーターの DHCP 固定割り当てで 192.168.1.11 を予約しておくと安心です。
+ラズパイの IP が変わらないよう、ルーターの DHCP 固定割り当てで予約しておくと安心です。
 
 ## ボタンを追加・変更する
 
