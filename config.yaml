@@ -1,0 +1,46 @@
+# SmartRoom 設定
+# ボタンを増やすときはここに追記するだけでOK（UIは自動で反映されます）。
+# code は codes.json（irrp.py で学習したファイル）のキー名です。
+
+gpio: 22              # 赤外線LEDをつないだ GPIO (BCM)
+carrier_khz: 38.0     # 搬送波周波数
+gap_ms: 100           # 連続送信時の間隔
+
+devices:
+  light:
+    label: 電気
+    icon: bulb
+    groups:
+      - layout: tiles
+        commands:
+          off:   { label: 消灯,   code: "power:off",  icon: power }
+          night: { label: 常夜灯, code: "power:half", icon: moon }
+          full:  { label: 全灯,   code: "power:on",   icon: sun }
+      - layout: stepper
+        commands:
+          down: { label: 暗く,   code: "light:down", icon: minus }
+          up:   { label: 明るく, code: "light:up",   icon: plus }
+      - layout: chips
+        commands:
+          p30: { label: "30%", code: "light:30" }
+          p60: { label: "60%", code: "light:60" }
+          p80: { label: "80%", code: "light:80" }
+
+  air:
+    label: エアコン
+    icon: fan
+    groups:
+      - layout: tiles
+        commands:
+          off: { label: オフ, code: "air:off", icon: power }
+          on:  { label: オン, code: "air:on",  icon: fan }
+
+scenes:
+  all_on:
+    label: ただいま
+    icon: home
+    steps: [light.p30, air.on]
+  all_off:
+    label: おやすみ
+    icon: moon
+    steps: [light.off, air.off]

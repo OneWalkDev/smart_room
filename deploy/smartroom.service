@@ -1,0 +1,17 @@
+[Unit]
+Description=SmartRoom IR remote (FastAPI)
+After=network-online.target pigpiod.service
+Wants=network-online.target
+Requires=pigpiod.service
+
+[Service]
+Type=simple
+User=yurisi
+WorkingDirectory=/home/yurisi/smart_room
+# Tailscale からのみ使う前提で localhost に限定し、`tailscale serve` で公開する
+ExecStart=/home/yurisi/smart_room/.venv/bin/uvicorn --factory app.main:create_app --host 127.0.0.1 --port 8000
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
