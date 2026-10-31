@@ -29,17 +29,20 @@ devices:
   air:
     label: エアコン
     icon: fan
+    # エアコンのリモコンは「モード+温度+運転」をまとめて送るので、よく使う設定をプリセットとして学習する
     groups:
       - layout: tiles
         commands:
-          off: { label: オフ, code: "air:off", icon: power }
-          on:  { label: オン, code: "air:on",  icon: fan }
+          off:  { label: 停止,       code: "air:off",  icon: power }
+          cool: { label: 冷房 26℃, code: "air:cool", icon: snow }
+          heat: { label: 暖房 22℃, code: "air:heat", icon: flame }
+          dry:  { label: 除湿,       code: "air:dry",  icon: droplet }
 
 scenes:
   all_on:
     label: ただいま
     icon: home
-    steps: [light.p30, air.on]
+    steps: [light.p30, air.heat]   # 夏は air.cool に
   all_off:
     label: おやすみ
     icon: moon

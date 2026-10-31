@@ -88,8 +88,10 @@ h1 { margin: 2px 0 0; font-size: 30px; font-weight: 700; letter-spacing: .02em; 
   font-size: 14px; font-weight: 600; transition: background .2s, border-color .2s, color .2s;
 }
 .tile svg { width: 24px; height: 24px; }
+.tiles:has(> :nth-child(4)) { grid-template-columns: repeat(2, 1fr); }
 .tile.current { background: color-mix(in srgb, var(--accent) 16%, var(--card-2)); border-color: var(--accent); color: var(--accent); }
 
+.tile[data-cmd="heat"] { --accent: #ff8a4c; }
 .tile.is-off.current { background: var(--card-2); border-color: var(--muted); color: var(--text); }
 
 /* stepper */

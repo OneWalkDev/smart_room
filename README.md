@@ -53,9 +53,9 @@ devices:
     groups:
       - layout: chips          # tiles / stepper / chips
         commands:
-          cool: { label: 冷房, code: "air:cool" }
+          cool27: { label: 冷房 27℃, code: "air:cool27" }
 scenes:
-  all_on: { label: ただいま, icon: home, steps: [light.p30, air.on] }
+  all_on: { label: ただいま, icon: home, steps: [light.p30, air.heat] }
 ```
 
 ## 赤外線コードの学習
@@ -63,8 +63,19 @@ scenes:
 pigpio 公式サンプルの [`irrp.py`](https://abyz.me.uk/rpi/pigpio/examples.html#Python_irrp_py) を使います（受光モジュールが GPIO 18 の例）:
 
 ```bash
-python3 irrp.py -r -g18 -f codes.json air:cool --no-confirm --post 130
+wget https://abyz.me.uk/rpi/pigpio/code/irrp_py.zip && unzip irrp_py.zip
+
+# 照明
+.venv/bin/python irrp.py -r -g18 -f codes.json --post 130 \
+  power:on power:off power:half light:up light:down light:30 light:60 light:80
+
+# エアコン（リモコン側でモード・温度を合わせてから運転ボタンを押す）
+.venv/bin/python irrp.py -r -g18 -f codes.json --post 130 air:cool air:heat air:dry air:off
 ```
+
+エアコンのリモコンは「モード・温度・風量・運転」をまとめて1つの信号で送るため、
+温度の上げ下げではなく、よく使う設定（冷房26℃・暖房22℃など）をプリセットとして1つずつ学習します。
+受光モジュールから30cmほどの距離でまっすぐ押してください。既存の codes.json に追記されます。
 
 ## API
 

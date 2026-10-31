@@ -17,7 +17,9 @@ CODES = {
     "light:30": [1, 2, 3],
     "light:60": [1, 2, 3],
     "light:80": [1, 2, 3],
-    "air:on": [4, 5, 6],
+    "air:cool": [4, 5, 6],
+    "air:heat": [7, 8, 9],
+    "air:dry": [1, 1, 1],
     # air:off は意図的に欠落させる
 }
 
@@ -41,7 +43,7 @@ def test_config_lists_devices_and_availability(env):
     assert names == ["light", "air"]
     air = cfg["devices"][1]
     avail = {c["name"]: c["available"] for g in air["groups"] for c in g["commands"]}
-    assert avail == {"off": False, "on": True}
+    assert avail == {"off": False, "cool": True, "heat": True, "dry": True}
     assert [s["name"] for s in cfg["scenes"]] == ["all_on", "all_off"]
 
 
@@ -74,9 +76,9 @@ def test_scene_runs_steps_in_order(env):
     client, tx, _ = env
     r = client.post("/api/scenes/all_on")
     assert r.status_code == 200
-    assert tx.sent == [CODES["light:30"], CODES["air:on"]]
+    assert tx.sent == [CODES["light:30"], CODES["air:heat"]]
     st = client.get("/api/state").json()
-    assert st["light"]["command"] == "p30" and st["air"]["command"] == "on"
+    assert st["light"]["command"] == "p30" and st["air"]["command"] == "heat"
 
 
 def test_index_served(env):

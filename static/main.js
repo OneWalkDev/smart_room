@@ -10,6 +10,9 @@
     minus: '<path d="M5 12h14"/>',
     bulb: '<path d="M9 18h6M10 22h4"/><path d="M15.1 14c.2-1 .7-1.7 1.4-2.5A4.6 4.6 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>',
     fan: '<path d="M12 12c-3-2.5-3-7 0-9 2 0 3 2 3 4.5L12 12"/><path d="M12 12c3.5-1 7.5 1.5 7.5 5-1.3 1.5-3.5 1.3-5.5 0L12 12"/><path d="M12 12c-.5 3.5-4.5 6-7.5 4.5-.5-2 1-3.7 3.2-4.5L12 12"/><circle cx="12" cy="12" r="1"/>',
+    snow: '<path d="M12 2v20M4.9 7l14.2 10M4.9 17 19.1 7"/><path d="m9 4 3 2 3-2M9 20l3-2 3 2"/>',
+    flame: '<path d="M12 22a7 7 0 0 0 7-7c0-4-3-6.5-4-10-2 2-3 3.5-3 6-1.5-1-2-2.5-2-4-2.5 2-5 5-5 8a7 7 0 0 0 7 7z"/>',
+    droplet: '<path d="M12 2.7 6.3 8.4a8 8 0 1 0 11.4 0z"/>',
     home: '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
   };
   const icon = (name) =>
@@ -109,6 +112,7 @@
         const btnCls = { tiles: "tile", stepper: "step", chips: "chip" }[layout];
         for (const c of g.commands) {
           const b = el("button", `${btnCls} press`, `${layout === "chips" ? "" : icon(c.icon)}<span>${esc(c.label)}</span>`);
+          b.dataset.cmd = c.name;
           if (c.name === "off") b.classList.add("is-off");
           if (!c.available) { b.disabled = true; b.title = "codes.json に未登録"; }
           b.onclick = () => press(b, `/api/devices/${d.name}/${c.name}`, `${d.label}：${c.label}`);
