@@ -97,3 +97,9 @@ SMARTROOM_BACKEND=mock .venv/bin/uvicorn --factory app.main:create_app --port 30
 ```
 
 環境変数: `SMARTROOM_BACKEND`（`pigpio`/`mock`）, `SMARTROOM_CONFIG`, `SMARTROOM_CODES`, `SMARTROOM_STATE`, `PIGPIO_HOST`
+
+## 困ったとき
+
+- `address already in use`（ポート 3000 が使用中）: `sudo ss -ltnp 'sport = :3000'` で確認。`tailscaled` なら古い `tailscale serve` 設定が残っているので `sudo tailscale serve reset`。
+- ボタンがグレー: `codes.json` に該当キーが無い。学習後は `sudo systemctl restart smartroom`。
+- ログ: `journalctl -u smartroom -n 50`
