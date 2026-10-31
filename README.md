@@ -1,12 +1,15 @@
 # SmartRoom
 
 Raspberry Pi + 赤外線LED で、部屋の照明とエアコンをスマホから操作するリモコンです。
-FastAPI で動き、外からは Tailscale 経由でアクセスします。
+FastAPI で動き、家の中からは `http://192.168.1.11:3000/`、外からは Tailscale 経由でアクセスします。
 
 ```
-スマホ ──(Tailscale / HTTPS)──> tailscale serve ──> uvicorn :3000 (127.0.0.1)
-                                                     └─ pigpiod ──> GPIO22 赤外線LED
+スマホ（家のWi-Fi）  ──> http://192.168.1.11:3000 ─┐
+スマホ（外出先）     ──> Tailscale ────────────────┴─> uvicorn 0.0.0.0:3000
+                                                        └─ pigpiod ──> GPIO22 赤外線LED
 ```
+
+> 認証はありません。ポート 3000 をルーターでポート開放（インターネットに公開）しないでください。
 
 ## 必要なもの
 
@@ -31,13 +34,13 @@ cp ~/webiopi/html/script/codes ./codes.json
 sudo cp deploy/smartroom.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now smartroom
-
-# Tailscale 内だけに HTTPS で公開
-sudo tailscale serve --bg 3000
 ```
 
-`tailscale serve status` に表示される `https://<ホスト名>.<tailnet>.ts.net/` をスマホで開き、
-「ホーム画面に追加」するとアプリのように使えます。
+- 家の中: `http://192.168.1.11:3000/`
+- 外出先: Tailscale をオンにして `http://<ラズパイのTailscale IP>:3000/`（`tailscale ip -4` で確認）
+
+スマホで開いて「ホーム画面に追加」するとアプリのように使えます。
+ラズパイの IP が変わらないよう、ルーターの DHCP 固定割り当てで 192.168.1.11 を予約しておくと安心です。
 
 ## ボタンを追加・変更する
 
