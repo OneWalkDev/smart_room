@@ -229,3 +229,10 @@ tests/      pytest
 | ボタンがグレー | `codes.json` にそのキーがない。学習後に `sudo systemctl restart smartroom` |
 | 送信しても家電が反応しない | 赤外線LEDの向き・距離、配線。`irrp.py -p` で直接送って確認 |
 | ログを見たい | `journalctl -u smartroom -n 50` |
+
+## ライセンス
+
+[MIT License](LICENSE)
+
+赤外線の送信処理（`app/ir.py`）は、pigpio のサンプル `irrp.py`（パブリックドメイン）の再生処理をもとにしています。
+`irrp.py` 本体はこのリポジトリには含まれていません。
