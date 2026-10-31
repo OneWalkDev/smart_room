@@ -59,6 +59,13 @@ def create_app(settings: Optional[Settings] = None, tx: Optional[Transmitter] = 
 
     app = FastAPI(title="SmartRoom")
 
+    @app.middleware("http")
+    async def no_stale_cache(request, call_next):
+        # 更新後に古い JS/CSS が残って画面が壊れないよう、毎回再検証させる（ETag で 304 になるので軽い）
+        resp = await call_next(request)
+        resp.headers["Cache-Control"] = "no-cache"
+        return resp
+
     def run(cmds: List[Command]) -> dict:
         try:
             for c in cmds:

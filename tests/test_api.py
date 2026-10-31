@@ -114,3 +114,9 @@ def test_yaml_on_off_keys_stay_strings(tmp_path):
     cfg.write_text("devices:\n  d:\n    groups:\n      - commands:\n          on: {label: a, code: x}\n          off: {label: b, code: y}\n")
     s = load_settings(cfg, tmp_path / "none.json")
     assert [c.name for c in s.devices["d"].groups[0].commands] == ["on", "off"]
+
+
+def test_static_is_revalidated(env):
+    client, _, _ = env
+    for path in ("/", "/static/main.js", "/static/style.css"):
+        assert client.get(path).headers["cache-control"] == "no-cache"
