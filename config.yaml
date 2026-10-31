@@ -34,8 +34,8 @@ devices:
       - layout: tiles
         commands:
           off:  { label: 停止,       code: "air:off",  icon: power }
-          cool: { label: 冷房 26℃, code: "air:cool", icon: snow }
-          heat: { label: 暖房 22℃, code: "air:heat", icon: flame }
+          cool: { label: 冷房 22℃, code: "air:cool", icon: snow }
+          heat: { label: 暖房 26℃, code: "air:heat", icon: flame }
           dry:  { label: 除湿,       code: "air:dry",  icon: droplet }
 
 scenes:
