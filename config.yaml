@@ -33,16 +33,22 @@ devices:
     groups:
       - layout: tiles
         commands:
-          off:  { label: 停止,       code: "air:off",  icon: power }
-          cool: { label: 冷房 22℃, code: "air:cool", icon: snow }
-          heat: { label: 暖房 26℃, code: "air:heat", icon: flame }
-          dry:  { label: 除湿,       code: "air:dry",  icon: droplet }
+          off: { label: 停止, code: "air:off", icon: power }
+          dry: { label: 除湿, code: "air:dry", icon: droplet }
+      - layout: tiles
+        commands:
+          cool22: { label: 冷房 22℃, code: "air:cool22", icon: snow }
+          cool26: { label: 冷房 26℃, code: "air:cool26", icon: snow }
+      - layout: tiles
+        commands:
+          heat22: { label: 暖房 22℃, code: "air:heat22", icon: flame }
+          heat26: { label: 暖房 26℃, code: "air:heat26", icon: flame }
 
 scenes:
   all_on:
     label: ただいま
     icon: home
-    steps: [light.p30, air.heat]   # 夏は air.cool に
+    steps: [light.p30, air.heat26]   # 夏は air.cool26 などに
   all_off:
     label: おやすみ
     icon: moon

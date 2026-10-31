@@ -91,7 +91,7 @@ h1 { margin: 2px 0 0; font-size: 30px; font-weight: 700; letter-spacing: .02em; 
 .tiles:has(> :nth-child(4)) { grid-template-columns: repeat(2, 1fr); }
 .tile.current { background: color-mix(in srgb, var(--accent) 16%, var(--card-2)); border-color: var(--accent); color: var(--accent); }
 
-.tile[data-cmd="heat"] { --accent: #ff8a4c; }
+.tile[data-cmd^="heat"] { --accent: #ff8a4c; }
 .tile.is-off.current { background: var(--card-2); border-color: var(--muted); color: var(--text); }
 
 /* stepper */
