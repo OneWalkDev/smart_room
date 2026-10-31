@@ -9,7 +9,7 @@ Type=simple
 User=yurisi
 WorkingDirectory=/home/yurisi/smart_room
 # Tailscale からのみ使う前提で localhost に限定し、`tailscale serve` で公開する
-ExecStart=/home/yurisi/smart_room/.venv/bin/uvicorn --factory app.main:create_app --host 127.0.0.1 --port 8000
+ExecStart=/home/yurisi/smart_room/.venv/bin/uvicorn --factory app.main:create_app --host 127.0.0.1 --port 3000
 Restart=on-failure
 RestartSec=3
 

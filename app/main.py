@@ -1,7 +1,7 @@
 """SmartRoom API サーバ。
 
-起動: uvicorn --factory app.main:create_app --host 127.0.0.1 --port 8000
-実機なしで試す: SMARTROOM_BACKEND=mock uvicorn --factory app.main:create_app --reload
+起動: uvicorn --factory app.main:create_app --host 127.0.0.1 --port 3000
+実機なしで試す: SMARTROOM_BACKEND=mock uvicorn --factory app.main:create_app --port 3000 --reload
 """
 import json
 import logging

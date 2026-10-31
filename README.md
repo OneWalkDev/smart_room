@@ -4,7 +4,7 @@ Raspberry Pi + 赤外線LED で、部屋の照明とエアコンをスマホか�
 FastAPI で動き、外からは Tailscale 経由でアクセスします。
 
 ```
-スマホ ──(Tailscale / HTTPS)──> tailscale serve ──> uvicorn :8000 (127.0.0.1)
+スマホ ──(Tailscale / HTTPS)──> tailscale serve ──> uvicorn :3000 (127.0.0.1)
                                                      └─ pigpiod ──> GPIO22 赤外線LED
 ```
 
@@ -33,7 +33,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now smartroom
 
 # Tailscale 内だけに HTTPS で公開
-sudo tailscale serve --bg 8000
+sudo tailscale serve --bg 3000
 ```
 
 `tailscale serve status` に表示される `https://<ホスト名>.<tailnet>.ts.net/` をスマホで開き、
@@ -78,7 +78,7 @@ python3 irrp.py -r -g18 -f codes.json air:cool --no-confirm --post 130
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt -r requirements-dev.txt
-SMARTROOM_BACKEND=mock .venv/bin/uvicorn --factory app.main:create_app --reload
+SMARTROOM_BACKEND=mock .venv/bin/uvicorn --factory app.main:create_app --port 3000 --reload
 .venv/bin/pytest
 ```
 
