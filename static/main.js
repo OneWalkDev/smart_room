@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  // lucide 風のシンプルなアイコン
+  // 線画アイコン（config.yaml の icon 名と対応）
   const P = {
     power: '<path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.8 0"/>',
     moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/>',
@@ -16,24 +16,45 @@
     home: '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
   };
   const icon = (name) =>
-    P[name] ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[name]}</svg>` : "";
+    P[name] ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${P[name]}</svg>` : "";
 
   const $ = (s) => document.querySelector(s);
   const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
-  let state = {};
-  const cards = {}; // device -> {card, stateEl, buttons: {cmd: el}}
+  const LAYOUTS = { tiles: "keys", stepper: "rocker", chips: "dial" };
+  const KEY_CLASS = { keys: "key", rocker: "rock", dial: "num" };
 
-  // ---- utils ----
-  let toastTimer;
-  function toast(msg, isErr) {
-    const t = $("#toast");
-    t.textContent = msg;
-    t.className = "toast show" + (isErr ? " err" : "");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => (t.className = "toast"), 1800);
+  let state = {};
+  let labels = {};   // device -> 表示名
+  const faces = {};  // device -> {face, stateEl, buttons: {cmd: {btn, label}}}
+
+  // ---- 送信窓（画面下の表示） ----
+  const win = $("#window"), readout = $("#readout"), alertEl = $("#alert");
+  let settleTimer;
+
+  function show(mode, msg) {
+    clearTimeout(settleTimer);
+    win.dataset.mode = mode;
+    if (mode === "err") {
+      readout.textContent = "";
+      alertEl.textContent = msg;
+    } else {
+      alertEl.textContent = "";
+      readout.textContent = msg;
+    }
+    // 成功表示は少し残してから「最後の送信」に戻す。エラーは次の操作まで残す
+    if (mode === "ok") settleTimer = setTimeout(showLatest, 2600);
   }
+
+  function showLatest() {
+    let latest = null;
+    for (const [dev, s] of Object.entries(state)) {
+      if (labels[dev] && (!latest || s.at > latest.s.at)) latest = { dev, s };
+    }
+    show("idle", latest ? `${ago(latest.s.at)}：${labels[latest.dev]}「${latest.s.label}」` : "まだ何も送信していません");
+  }
+
   function ago(ts) {
     const s = Math.max(0, Date.now() / 1000 - ts);
     if (s < 60) return "たった今";
@@ -43,92 +64,160 @@
   }
 
   async function api(path, opts) {
-    const r = await fetch(path, opts);
+    let r;
+    try {
+      r = await fetch(path, opts);
+    } catch {
+      throw new Error("Raspberry Pi に接続できません。電源とネットワークを確認してください");
+    }
     const body = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(body.detail || `HTTP ${r.status}`);
+    if (!r.ok) throw new Error(body.detail || `サーバがエラーを返しました（HTTP ${r.status}）`);
     return body;
   }
 
-  // ---- render ----
+  // ---- 状態の反映 ----
   function renderState() {
-    for (const [dev, c] of Object.entries(cards)) {
+    for (const [dev, f] of Object.entries(faces)) {
       const s = state[dev];
-      c.stateEl.textContent = s ? `${s.label} ・ ${ago(s.at)}` : "まだ操作していません";
-      c.card.dataset.active = s && !["off"].includes(s.command) ? "1" : "0";
-      for (const [name, b] of Object.entries(c.buttons)) b.classList.toggle("current", !!s && s.command === name);
+      f.stateEl.textContent = s ? `${s.label}（${ago(s.at)}）` : "まだ操作していません";
+      f.face.dataset.active = s && s.command !== "off" ? "1" : "0";
+      for (const [name, k] of Object.entries(f.buttons)) {
+        const cur = !!s && s.command === name;
+        k.btn.classList.toggle("current", cur);
+        k.btn.setAttribute("aria-label", k.label + (cur ? "（最後に送信）" : ""));
+      }
     }
   }
 
-  async function press(btn, path, okMsg) {
+  let sending = 0;
+  async function press(btn, path, what) {
+    if (btn.getAttribute("aria-disabled") === "true") return;
+    btn.setAttribute("aria-disabled", "true");
     btn.classList.add("busy");
+    sending++;
+    win.dataset.tx = "1";
+    show("busy", `送信中…　${what}`);
     try {
       const res = await api(path, { method: "POST", headers: { "X-SmartRoom": "1" } });
       state = res.state || state;
       renderState();
-      btn.classList.remove("flash-ok"); void btn.offsetWidth; btn.classList.add("flash-ok");
+      replay(btn, "flash-ok");
       navigator.vibrate && navigator.vibrate(12);
-      toast(okMsg);
+      show("ok", `${what}を送信しました`);
     } catch (e) {
-      btn.classList.remove("flash-err"); void btn.offsetWidth; btn.classList.add("flash-err");
-      toast(`送信失敗: ${e.message}`, true);
+      replay(btn, "flash-err");
+      navigator.vibrate && navigator.vibrate([30, 60, 30]);
+      show("err", `${what}を送信できませんでした。${e.message}`);
+      refreshState(); // シーンの途中で失敗した場合、送れた分だけ状態が進んでいる
     } finally {
       btn.classList.remove("busy");
+      btn.removeAttribute("aria-disabled");
+      if (--sending === 0) delete win.dataset.tx;
     }
   }
+  function replay(node, cls) {
+    node.classList.remove("flash-ok", "flash-err");
+    void node.offsetWidth;
+    node.classList.add(cls);
+  }
 
+  // ---- 画面の生成（/api/config から） ----
   function render(cfg) {
     const scenes = $("#scenes");
     scenes.innerHTML = "";
     for (const s of cfg.scenes) {
-      const b = el("button", "scene press", `${icon(s.icon)}<div><div class="lbl">${esc(s.label)}</div><div class="sub">まとめて操作</div></div>`);
-      b.querySelector("svg") && b.querySelector("svg").classList.add("ico");
-      b.onclick = () => press(b, `/api/scenes/${s.name}`, `${s.label}：送信しました`);
+      const b = el("button", "scene press", `${icon(s.icon)}<span class="lbl">${esc(s.label)}</span>`);
+      b.type = "button";
+      b.dataset.scene = s.name;
+      b.setAttribute("aria-label", `シーン「${s.label}」を送信`);
+      b.onclick = () => press(b, `/api/scenes/${encodeURIComponent(s.name)}`, `「${s.label}」`);
       scenes.append(b);
     }
-    if (!cfg.scenes.length) scenes.remove();
+    scenes.hidden = !cfg.scenes.length;
 
     const root = $("#devices");
     root.innerHTML = "";
+    labels = {};
     for (const d of cfg.devices) {
-      const card = el("section", "card");
-      card.dataset.device = d.name;
-      const head = el("div", "card-head", `<div class="badge">${icon(d.icon)}</div><div><div class="card-title">${esc(d.label)}</div><div class="card-state"></div></div>`);
-      card.append(head);
-      const entry = { card, stateEl: head.querySelector(".card-state"), buttons: {} };
+      labels[d.name] = d.label;
+      const face = el("section", "face");
+      face.dataset.device = d.name;
+      const hid = `dev-${d.name}`;
+      face.setAttribute("aria-labelledby", hid);
+      face.append(el("div", "face-head",
+        `<span class="led" aria-hidden="true"></span>${icon(d.icon)}` +
+        `<h2 class="face-title" id="${esc(hid)}">${esc(d.label)}</h2>` +
+        `<p class="face-state"></p>`));
+      const entry = { face, stateEl: face.querySelector(".face-state"), buttons: {} };
+      let missing = false;
 
       for (const g of d.groups) {
-        const layout = { tiles: "tiles", stepper: "stepper", chips: "chips" }[g.layout] || "tiles";
+        const layout = LAYOUTS[g.layout] || "keys";
         const wrap = el("div", `group ${layout}`);
-        const btnCls = { tiles: "tile", stepper: "step", chips: "chip" }[layout];
+        wrap.style.setProperty("--n", g.commands.length);
         for (const c of g.commands) {
-          const b = el("button", `${btnCls} press`, `${layout === "chips" ? "" : icon(c.icon)}<span>${esc(c.label)}</span>`);
+          const showIcon = layout !== "dial";
+          const b = el("button", `${KEY_CLASS[layout]} press`, `${showIcon ? icon(c.icon) : ""}<span class="lbl">${esc(c.label)}</span>`);
+          b.type = "button";
           b.dataset.cmd = c.name;
           if (c.name === "off") b.classList.add("is-off");
-          if (!c.available) { b.disabled = true; b.title = "codes.json に未登録"; }
-          b.onclick = () => press(b, `/api/devices/${d.name}/${c.name}`, `${d.label}：${c.label}`);
-          entry.buttons[c.name] = b;
+          if (/^heat/.test(c.name) || c.icon === "flame") b.classList.add("is-heat");
+          if (/^cool/.test(c.name) || c.icon === "snow") b.classList.add("is-cool");
+          const label = `${d.label} ${c.label}`;
+          if (!c.available) {
+            b.disabled = true;
+            b.classList.add("unlearned");
+            b.setAttribute("aria-label", `${label}（未学習）`);
+            missing = true;
+          } else {
+            b.setAttribute("aria-label", label);
+            b.onclick = () => press(b, `/api/devices/${encodeURIComponent(d.name)}/${encodeURIComponent(c.name)}`, `${d.label}「${c.label}」`);
+            entry.buttons[c.name] = { btn: b, label };
+          }
           wrap.append(b);
         }
-        card.append(wrap);
+        face.append(wrap);
       }
-      cards[d.name] = entry;
-      root.append(card);
+      if (missing) face.append(el("p", "face-note", "点線のボタンは信号が未学習です。irrp.py で codes.json に記録してから再起動してください。"));
+      faces[d.name] = entry;
+      root.append(face);
     }
+    if (!cfg.devices.length) {
+      root.append(el("p", "empty", "機器がありません。config.yaml の devices に追加して再起動してください。"));
+    }
+  }
+
+  function renderOffline(msg) {
+    const root = $("#devices");
+    root.innerHTML = "";
+    const box = el("div", "empty", `<p>${esc(msg)}</p>`);
+    const retry = el("button", "retry press", "もう一度つなぐ");
+    retry.type = "button";
+    retry.onclick = () => { show("busy", "接続中…"); init(); };
+    box.append(retry);
+    root.append(box);
+    $("#scenes").hidden = true;
+    show("err", "画面を読み込めませんでした");
   }
 
   async function refreshState() {
     try { state = await api("/api/state"); } catch { /* 次回の更新で再取得 */ }
     renderState();
+    if (win.dataset.mode === "idle") showLatest();
   }
 
+  let started = false;
   async function init() {
     try {
       render(await api("/api/config"));
     } catch (e) {
-      toast("サーバに接続できません", true);
+      renderOffline(e.message);
       return;
     }
     await refreshState();
+    showLatest();
+    if (started) return;
+    started = true;
     setInterval(refreshState, 15000);
     document.addEventListener("visibilitychange", () => document.visibilityState === "visible" && refreshState());
   }

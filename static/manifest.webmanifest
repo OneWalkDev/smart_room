@@ -1,0 +1,13 @@
+{
+  "name": "お部屋のリモコン",
+  "short_name": "お部屋",
+  "lang": "ja",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1e2128",
+  "theme_color": "#1e2128",
+  "icons": [
+    { "src": "/static/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
