@@ -96,7 +96,17 @@ SMARTROOM_BACKEND=mock .venv/bin/uvicorn --factory app.main:create_app --port 30
 .venv/bin/pytest
 ```
 
-環境変数: `SMARTROOM_BACKEND`（`pigpio`/`mock`）, `SMARTROOM_CONFIG`, `SMARTROOM_CODES`, `SMARTROOM_STATE`, `PIGPIO_HOST`
+環境変数: `SMARTROOM_BACKEND`（`pigpio`/`mock`）, `SMARTROOM_CONFIG`, `SMARTROOM_CODES`, `SMARTROOM_STATE`, `PIGPIO_HOST`, `SMARTROOM_ALLOWED_HOSTS`
+
+## セキュリティ
+
+認証はないので、LAN と Tailscale の中だけで使ってください（ルーターでのポート開放はしないこと）。
+そのうえで、ブラウザ経由の攻撃を防ぐため次の制限をかけています。
+
+- **CSRF 対策**: POST には `X-SmartRoom: 1` ヘッダが必須。他サイトのページから勝手に赤外線を送らせることはできません。
+- **DNS リバインディング対策**: `Host` が IP アドレス・`localhost`・ドット無しのホスト名・`*.local` 以外なら 403。
+  MagicDNS 名などで開く場合は `sudo systemctl edit smartroom` で
+  `Environment=SMARTROOM_ALLOWED_HOSTS=pi.example.ts.net` のように追加してください。
 
 ## 困ったとき
 

@@ -62,7 +62,7 @@
   async function press(btn, path, okMsg) {
     btn.classList.add("busy");
     try {
-      const res = await api(path, { method: "POST" });
+      const res = await api(path, { method: "POST", headers: { "X-SmartRoom": "1" } });
       state = res.state || state;
       renderState();
       btn.classList.remove("flash-ok"); void btn.offsetWidth; btn.classList.add("flash-ok");
