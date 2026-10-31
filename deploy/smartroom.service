@@ -7,9 +7,9 @@ Requires=pigpiod.service
 [Service]
 Type=simple
 User=yurisi
-WorkingDirectory=/home/yurisi/smart_room
+WorkingDirectory=/home/yurisi/workspace/smart_room
 # LAN (192.168.1.11:3000) と Tailscale の両方から受け付ける。認証なしなのでポート開放はしないこと
-ExecStart=/home/yurisi/smart_room/.venv/bin/uvicorn --factory app.main:create_app --host 0.0.0.0 --port 3000
+ExecStart=/home/yurisi/workspace/smart_room/.venv/bin/uvicorn --factory app.main:create_app --host 0.0.0.0 --port 3000
 Restart=on-failure
 RestartSec=3
 

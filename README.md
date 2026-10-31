@@ -20,11 +20,11 @@ FastAPI で動き、家の中からは `http://192.168.1.11:3000/`、外から�
 ## セットアップ（Raspberry Pi）
 
 ```bash
-sudo apt install -y pigpio python3-venv
+sudo apt install -y pigpio python3-venv   # Bookworm は python3.11-venv
 sudo systemctl enable --now pigpiod
 
-git clone https://github.com/OneWalkDev/smart_room.git ~/smart_room
-cd ~/smart_room
+git clone https://github.com/OneWalkDev/smart_room.git ~/workspace/smart_room
+cd ~/workspace/smart_room
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 
